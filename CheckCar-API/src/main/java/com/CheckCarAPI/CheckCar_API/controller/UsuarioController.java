@@ -13,37 +13,53 @@ import java.util.List;
 
 public class UsuarioController {
 
-    @Autowired //injeta o service do usuario
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
 
-    @PostMapping //inserir/cadastrar os usuários
-    public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) { //os dados virão em .json
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
+
+    @PostMapping
+    public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
+        if (usuario == null) return ResponseEntity.badRequest().build();
         Usuario novo = usuarioService.salvar(usuario);
-        return ResponseEntity.ok(novo); //devolve o status 200 (ok)
+        return ResponseEntity.ok(novo);
     }
 
     @GetMapping("/{cpf}")
-    public ResponseEntity<Usuario> buscarPorCpf(@PathVariable String cpf) { //pega o valor inserido e coloca na variável cpf
+    public ResponseEntity<Usuario> buscarPorCpf(@PathVariable String cpf) {
+        if (cpf == null) return ResponseEntity.badRequest().build();
         Usuario usuario = usuarioService.buscarPorCpf(cpf);
         return ResponseEntity.ok(usuario);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
-        usuarioService.deletar(id);
-        return ResponseEntity.noContent().build(); //devolve status 204 (sem conteúdo), mostrando que foi apagado
-    }
-
     @GetMapping
     public ResponseEntity<List<Usuario>> listarTodos() {
-        List<Usuario> usuarios = usuarioService.listarTodos();
-        return ResponseEntity.ok(usuarios);
+        List<Usuario> lista = usuarioService.listarTodos();
+        if (lista.isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(lista);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<Usuario> login(@RequestBody Usuario credenciais) {
-        Usuario usuario = usuarioService.autenticar(credenciais.getCpf(), credenciais.getSenha());
-        return ResponseEntity.ok(usuario);
+    @PutMapping("/{cpf}")
+    public ResponseEntity<Usuario> atualizar(@PathVariable String cpf, @RequestBody Usuario usuario) {
+        if (cpf == null || usuario == null) return ResponseEntity.badRequest().build();
+
+        Usuario existente = usuarioService.buscarPorCpf(cpf);
+
+        usuario.setId(existente.getId());
+        usuario.setCpf(existente.getCpf());
+
+        Usuario atualizado = usuarioService.salvar(usuario);
+        return ResponseEntity.ok(atualizado);
+    }
+
+    @DeleteMapping("/{cpf}")
+    public ResponseEntity<Void> deletar(@PathVariable String cpf) {
+        if (cpf == null) return ResponseEntity.badRequest().build();
+
+        Usuario existente = usuarioService.buscarPorCpf(cpf);
+
+        usuarioService.deletar(existente.getId());
+        return ResponseEntity.noContent().build();
     }
 }
-

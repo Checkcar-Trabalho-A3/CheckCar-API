@@ -8,44 +8,60 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-    @RestController
-    @RequestMapping("/api/veiculos")
-    public class VeiculoController {
+   @RestController
+@RequestMapping("/api/veiculos")
+public class VeiculoController {
 
-        @Autowired
-        private VeiculoService veiculoService;
+    private final VeiculoService veiculoService;
 
-        @PostMapping
-        public ResponseEntity<Veiculo> cadastrar(@RequestBody Veiculo veiculo) {
-            Veiculo novo = veiculoService.salvar(veiculo);
-            return ResponseEntity.ok(novo);
-        }
-
-        @GetMapping
-        public ResponseEntity<List<Veiculo>> listarTodos() {
-            return ResponseEntity.ok(veiculoService.listarTodos());
-        }
-
-        @GetMapping("/{id}")
-        public ResponseEntity<Veiculo> buscarPorId(@PathVariable Integer id) {
-            return ResponseEntity.ok(veiculoService.buscarPorId(id));
-        }
-
-        @DeleteMapping("/{id}")
-        public ResponseEntity<Void> deletar(@PathVariable Integer id) {
-            veiculoService.deletar(id);
-            return ResponseEntity.noContent().build();
-        }
-
-        @GetMapping("/todas-placas")
-        public List<String> listarPlacas() {
-            return veiculoService.listarTodasPlacas();
-        }
-
-        @GetMapping("/placa/{placa}")
-        public Veiculo buscarPorPlaca(@PathVariable String placa) {
-            return veiculoService.buscarPorPlaca(placa);
-        }
+    public VeiculoController(VeiculoService veiculoService) {
+        this.veiculoService = veiculoService;
     }
 
+    @PostMapping
+    public ResponseEntity<Veiculo> cadastrar(@RequestBody Veiculo veiculo) {
+        if (veiculo == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Veiculo novo = veiculoService.salvar(veiculo);
+        return ResponseEntity.ok(novo);
+    }
 
+    @GetMapping
+    public ResponseEntity<List<Veiculo>> listarTodos() {
+        List<Veiculo> lista = veiculoService.listarTodos();
+        if (lista.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(lista);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Veiculo> buscarPorId(@PathVariable Integer id) {
+        if (id == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Veiculo veiculo = veiculoService.buscarPorId(id);
+        return ResponseEntity.ok(veiculo);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Veiculo> atualizar(@PathVariable Integer id, @RequestBody Veiculo veiculo) {
+        if (id == null || veiculo == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Veiculo existente = veiculoService.buscarPorId(id);
+        veiculo.setId(existente.getId()); // mantém o mesmo ID
+        Veiculo atualizado = veiculoService.salvar(veiculo);
+        return ResponseEntity.ok(atualizado);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+        if (id == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        veiculoService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
+}
